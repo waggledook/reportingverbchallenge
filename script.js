@@ -1,3 +1,19 @@
+// Define loadScript if not already defined
+function loadScript(url, callback) {
+  const script = document.createElement("script");
+  script.src = url;
+  script.onload = callback;
+  document.head.appendChild(script);
+}
+
+// Load jsPDF and AutoTable
+loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", () => {
+  loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js", () => {
+    console.log("jsPDF and AutoTable loaded!");
+  });
+});
+
+
 class ReportingVerbGame {
     constructor(sentences) {
         this.originalSentences = sentences;
@@ -105,6 +121,26 @@ class ReportingVerbGame {
                 color: white;
                 border-radius: 5px;
             }
+            .original-sentence {
+            color: #FFD700;      /* Gold */
+            font-weight: bold;
+            margin-bottom: 0.5em;
+            }
+            .gapped-sentence {
+            color: #00FFFF;      /* Cyan */
+            font-style: italic;
+            margin-top: 0;
+            }
+            .game-over {
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+.new-high {
+    font-size: 20px;
+    color: #28a745;
+}
+
         </style>
         <div id="game-container">
             <h1>Reporting Verb Challenge</h1> <!-- Change this from Inversion Sentence Challenge -->
@@ -114,6 +150,7 @@ class ReportingVerbGame {
             <input type="text" id="answer" autofocus>
             <p id="feedback"></p>
             <p>Score: <span id="score">0</span></p>
+            <p>Best Score: <span id="bestScore">0</span></p>
             <button id="start">Start Game</button>
             <button id="restart">Restart</button>
             <button id="review">Review Mistakes</button>
@@ -126,6 +163,7 @@ class ReportingVerbGame {
         document.getElementById("restart").addEventListener("click", () => this.restartGame());
         document.getElementById("review").addEventListener("click", () => this.startReview());
         this.setupInputListener();
+        this.updateBestScoreDisplay();
     }
 
 
@@ -136,6 +174,12 @@ class ReportingVerbGame {
             }
         });
     }
+   
+    updateBestScoreDisplay() {
+    // Retrieve best score from localStorage; default to 0 if none is stored
+    const storedBest = localStorage.getItem("bestScoreReportingVerb") || 0;
+    document.getElementById("bestScore").textContent = storedBest;
+}
 
     startGame() {
         this.gameActive = true;
@@ -163,7 +207,10 @@ class ReportingVerbGame {
             // Show original sentence without inversion, followed by the incomplete version
             const originalSentence = this.sentences[this.currentIndex].sentence;
             const incompleteSentence = this.sentences[this.currentIndex].incompleteSentence;
-            document.getElementById("sentence").textContent = `${originalSentence}\n\n${incompleteSentence}`;
+            document.getElementById("sentence").innerHTML = `
+    <p class="original-sentence">${originalSentence}</p>
+    <p class="gapped-sentence">${incompleteSentence}</p>
+`;
             document.getElementById("answer").value = "";
         } else {
             this.endGame();
@@ -176,8 +223,10 @@ class ReportingVerbGame {
     const input = document.getElementById("answer");
     const userInput = input.value.trim().toLowerCase();
     const currentSet = this.reviewMode ? this.wrongAnswers : this.sentences;
-
     const currentSentence = currentSet[this.currentIndex];
+    
+    // Record the user's answer for every question
+    currentSentence.userAnswer = userInput || "(no answer)";
     
     // Ensure correctAnswers is an array
     if (!currentSentence || !Array.isArray(currentSentence.correctAnswers) || currentSentence.correctAnswers.length === 0) {
@@ -186,11 +235,9 @@ class ReportingVerbGame {
     }
 
     const correctAnswers = currentSentence.correctAnswers;
-    
-    // Normalize the answers for comparison
     const normalizedCorrectAnswers = correctAnswers.map(answer => answer.toLowerCase());
 
-    // Check if the user input matches any of the correct answers
+    // Check if the user's input matches any of the correct answers
     if (normalizedCorrectAnswers.includes(userInput)) {
         if (!this.reviewMode) {
             this.score += 10;
@@ -205,12 +252,11 @@ class ReportingVerbGame {
         input.classList.add("incorrect");
         document.getElementById("feedback").textContent = `Incorrect: Correct answer(s) are '${correctAnswers.join(", ")}'`;
 
-        // Store incorrect answers for review mode
         if (!this.reviewMode) {
             this.wrongAnswers.push({
                 sentence: currentSentence.sentence,
                 incompleteSentence: currentSentence.incompleteSentence,
-                correctAnswers: correctAnswers, // Ensure this is stored as an array
+                correctAnswers: correctAnswers,
                 userAnswer: userInput || "(no answer)"
             });
         }
@@ -248,14 +294,47 @@ class ReportingVerbGame {
     endGame() {
     this.gameActive = false;
     clearInterval(this.interval);
+
+    // Retrieve stored best score; if none, default to 0
+    let storedBest = parseInt(localStorage.getItem("bestScoreReportingVerb")) || 0;
+    let newHighScore = false;
+    if (this.score > storedBest) {
+        localStorage.setItem("bestScoreReportingVerb", this.score);
+        storedBest = this.score; // update storedBest for display
+        newHighScore = true;
+    }
+
+    // Update the best score display
+    this.updateBestScoreDisplay();
+
+    // Build Game Over message
+    let endMessage = `
+        <div class="game-over">Game Over!</div>
+        <div>Your score: ${this.score}</div>
+        <div>Best Score: ${storedBest}</div>
+    `;
+    if (newHighScore) {
+        endMessage += `<div class="new-high">New High Score!</div>`;
+    }
+    document.getElementById("sentence").innerHTML = endMessage;
+
+    // Hide answer input and clear feedback
+    document.getElementById("answer").style.display = "none";
+    document.getElementById("feedback").textContent = "";
+
+    // Show restart and review buttons
+    document.getElementById("restart").style.display = "block";
     document.getElementById("review").style.display = this.wrongAnswers.length > 0 ? "block" : "none";
 
-    // Show the download report button if mistakes were made
+    // Show Download Report button if mistakes exist
     if (this.wrongAnswers.length > 0) {
         const reportButton = document.getElementById("downloadReport");
         if (reportButton) {
-            reportButton.style.display = "block"; // Show the download report button
-            reportButton.addEventListener("click", () => this.generateReport()); // Attach click event
+            reportButton.style.display = "block";
+            if (!reportButton.dataset.listenerAdded) {
+                reportButton.addEventListener("click", () => this.generateReport());
+                reportButton.dataset.listenerAdded = "true";
+            }
         }
     }
 }
@@ -294,64 +373,113 @@ class ReportingVerbGame {
     }
 }
     generateReport() {
-    if (this.wrongAnswers.length === 0) {
-        alert("No mistakes were made. Great job!");
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        console.error("jsPDF and its plugins have not loaded yet.");
+        alert("Report generation is not ready yet. Please try again in a moment.");
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    if (typeof doc.autoTable !== "function") {
+        console.error("autoTable is not attached to jsPDF.");
+        alert("AutoTable plugin is not available.");
         return;
     }
 
-    let reportText = "Reporting Verb Challenge - Mistakes Report\n\n";
+    // Title of the report
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 150);
+    doc.text("Reporting Verb Challenge - Full Report", 14, 20);
 
-    this.wrongAnswers.forEach(mistake => {
-        const userAnswer = mistake.userAnswer || "(no answer)";
-        const correctAnswer = mistake.correctAnswers.join(", ");  // Join multiple answers with commas if needed
-
-        // Replace the blank in the original sentence with the user's answer
-        const userSentence = mistake.incompleteSentence.replace("______", userAnswer);
-
-        // Replace the blank in the original sentence with the correct answer
-        const correctSentence = mistake.incompleteSentence.replace("______", correctAnswer);
-
-        // Add the original sentence, user's answer, and correct answer to the report
-        reportText += `Original sentence: "${mistake.sentence}"\n`;  // Display the original sentence
-        reportText += `You wrote: "${userSentence}"\n`;  // Show user's incorrect answer in the sentence
-        reportText += `The correct answer is: "${correctSentence}"\n\n`;  // Show correct answer in the sentence
+    // Filter to only include answered sentences
+    const answeredSentences = this.sentences.filter(s => s.userAnswer !== undefined);
+    
+    // Prepare table rows only for answered questions
+    let tableRows = [];
+    answeredSentences.forEach((s, index) => {
+        let userAns = s.userAnswer || "(no answer)";
+        let result = (userAns.trim().toLowerCase() === s.correctAnswers[0].trim().toLowerCase())
+            ? "Correct" : "Incorrect";
+        tableRows.push([
+            index + 1,
+            s.sentence,
+            s.incompleteSentence,
+            userAns,
+            s.correctAnswers.join(", "),
+            result
+        ]);
     });
 
-    // Create a Blob and generate a download link for the report
-    const blob = new Blob([reportText], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "reporting_verb_game_report.txt";  // Report file name
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link); // Clean up
+    // Generate the table using AutoTable with custom cell styling
+    doc.autoTable({
+        startY: 30,
+        head: [["#", "Original Sentence", "Gapped Sentence", "Your Answer", "Correct Answer", "Result"]],
+        body: tableRows,
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        bodyStyles: { fontSize: 10, cellPadding: 3 },
+        alternateRowStyles: { fillColor: [255, 255, 255] },
+        margin: { left: 10, right: 10 },
+        styles: { overflow: 'linebreak' },
+        didParseCell: function(data) {
+            if (data.section === 'body') {
+                if (data.column.index === 3) {  // "Your Answer"
+                    let userAns = data.cell.raw;
+                    let correctAns = data.row.raw[4]; // "Correct Answer" column
+                    if (userAns.trim().toLowerCase() === correctAns.trim().toLowerCase()) {
+                        data.cell.styles.textColor = [0, 128, 0]; // Green for correct
+                    } else {
+                        data.cell.styles.textColor = [255, 0, 0]; // Red for incorrect
+                    }
+                    data.cell.styles.fontStyle = "bold";
+                }
+                if (data.column.index === 4) {
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.textColor = [0, 0, 0];
+                }
+                if (data.column.index === 5) {
+                    if (data.cell.raw === "Correct") {
+                        data.cell.styles.textColor = [0, 128, 0];
+                    } else if (data.cell.raw === "Incorrect") {
+                        data.cell.styles.textColor = [255, 0, 0];
+                    }
+                    data.cell.styles.fontStyle = "bold";
+                }
+            }
+        }
+    });
+
+    // Save the PDF report
+    doc.save("report_challenge_full_report.pdf");
 }
 
     restartGame() {
-        this.gameActive = false;
-        this.reviewMode = false;
-        clearInterval(this.interval);
+    this.gameActive = false;
+    this.reviewMode = false;
+    clearInterval(this.interval);
+    this.currentIndex = 0;
+    this.score = 0;
+    this.wrongAnswers = [];
+    this.sentences = this.shuffle([...this.originalSentences]); // or slice the array if you're using a fixed set
 
-        // Reset game variables
-        this.currentIndex = 0;
-        this.score = 0;
-        this.timer = 120;
-        this.wrongAnswers = [];
-        this.sentences = this.shuffle([...this.originalSentences]);
+    // Reset UI elements
+    document.getElementById("score").textContent = this.score;
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("sentence").textContent = "";
+    const input = document.getElementById("answer");
+    input.value = "";
+    input.style.display = "block";
+    input.focus();
 
-        // Reset UI
-        document.getElementById("score").textContent = this.score;
-        document.getElementById("feedback").textContent = "";
-        document.getElementById("sentence").textContent = "";
-        document.getElementById("answer").value = "";
-        document.getElementById("timer").textContent = "Time left: 120s";
-        document.getElementById("timer-bar").style.width = "100%";
+    document.getElementById("timer").textContent = "Time left: 120s"; // Or your appropriate time
+    document.getElementById("timer-bar").style.width = "100%";
 
-        // Show start button
-        document.getElementById("review").style.display = "none";
-        document.getElementById("restart").style.display = "none";
-        document.getElementById("start").style.display = "block";
-    }
+    // Hide review and restart buttons, and show the start button
+    document.getElementById("review").style.display = "none";
+    document.getElementById("restart").style.display = "none";
+    document.getElementById("start").style.display = "block";
+}
+
 }
 
 // Sentences with negative adverbial prompts for inversion
