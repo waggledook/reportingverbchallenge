@@ -91,36 +91,91 @@ class ReportingVerbGame {
             button:hover {
                 opacity: 0.8;
             }
-            #start {
-                background: #28a745;
-                color: white;
-            }
-            #restart {
-                background: #007bff;
-                color: white;
-                display: none;
-            }
-            #review {
-                background: #ffc107;
-                color: black;
-                display: none;
-            }
+            /* Start Button */
+#start {
+    background: linear-gradient(135deg, #32CD32, #228B22);
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+#start:hover {
+    background: linear-gradient(135deg, #228B22, #32CD32);
+    transform: translateY(-2px);
+}
+#start:active {
+    transform: translateY(1px);
+}
+            /* Restart Button */
+#restart {
+    background: linear-gradient(135deg, #339AF0, #1C7ED6);
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: none;
+}
+#restart:hover {
+    background: linear-gradient(135deg, #1C7ED6, #339AF0);
+    transform: translateY(-2px);
+}
+#restart:active {
+    transform: translateY(1px);
+}
+            /* Review Button */
+#review {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: black;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: none;
+}
+#review:hover {
+    background: linear-gradient(135deg, #FFA500, #FFD700);
+    transform: translateY(-2px);
+}
+#review:active {
+    transform: translateY(1px);
+}
             #timer-bar {
                 width: 100%;
                 height: 10px;
                 background: red;
                 transition: width 1s linear;
             }
-            /* Add this section for the "Download Report" button */
-            #downloadReport {
-                display: none; /* Start off hidden */
-                padding: 10px 20px;
-                font-size: 18px;
-                margin-top: 20px;
-                background: #ff6f61;
-                color: white;
-                border-radius: 5px;
-            }
+            /* Download Report Button */
+#downloadReport {
+    background: linear-gradient(135deg, #FF857A, #FF5E57);
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    display: none;
+}
+#downloadReport:hover {
+    background: linear-gradient(135deg, #FF5E57, #FF857A);
+    transform: translateY(-2px);
+}
+#downloadReport:active {
+    transform: translateY(1px);
+}
             .original-sentence {
             color: #FFD700;      /* Gold */
             font-weight: bold;
@@ -178,6 +233,10 @@ class ReportingVerbGame {
         #close-instructions:hover {
             opacity: 0.8;
         }
+        #game-container img {
+    max-width: 95%;
+    margin-bottom: 10px;
+}
         
         </style>
 
@@ -197,7 +256,8 @@ class ReportingVerbGame {
     </div>
 
         <div id="game-container">
-            <h1>Reporting Verb Challenge</h1> <!-- Change this from Inversion Sentence Challenge -->
+            <img src="images/title-banner.png" alt="Reporting Verb Challenge" style="width:500px; height:auto;">
+ <!-- Change this from Inversion Sentence Challenge -->
             <div id="timer-bar"></div>
             <p id="timer">Time left: 120s</p>
             <p id="sentence"></p>
@@ -525,9 +585,11 @@ class ReportingVerbGame {
     document.getElementById("feedback").textContent = "";
     document.getElementById("sentence").textContent = "";
     const input = document.getElementById("answer");
-    input.value = "";
-    input.style.display = "block";
-    input.focus();
+input.value = "";
+input.style.display = "block";
+input.style.margin = "0 auto"; // centers the block-level element
+input.focus();
+
 
     document.getElementById("timer").textContent = "Time left: 120s"; // Or your appropriate time
     document.getElementById("timer-bar").style.width = "100%";
