@@ -140,8 +140,62 @@ class ReportingVerbGame {
     font-size: 20px;
     color: #28a745;
 }
-
+/* Instructions overlay styles */
+        #instructions-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #instructions-box {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: left;
+        }
+        #instructions-box h2 {
+            margin-top: 0;
+        }
+        #close-instructions {
+            margin-top: 15px;
+            padding: 5px 10px;
+            background: #28a745;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        #close-instructions:hover {
+            opacity: 0.8;
+        }
+        
         </style>
+
+        <!-- Instructions Overlay -->
+    <div id="instructions-overlay">
+        <div id="instructions-box">
+            <h2>How to Play the Reporting Verb Challenge</h2>
+            <p>Welcome to the Reporting Verb Challenge!</p>
+            <p>You will be given a series of sentences with missing reporting verbs. Complete the sentence by entering the correct verb phrase using GERUNDS or INFINITIVES where appropriate.</p>
+            <p>
+                For each correct answer you earn 10 points. However, if you answer incorrectly, you lose 1 point.
+                You have a total of 2 minutes to complete the challenge.
+            </p>
+            <p>Good luck and have fun!</p>
+            <button id="close-instructions">Got It!</button>
+        </div>
+    </div>
+
         <div id="game-container">
             <h1>Reporting Verb Challenge</h1> <!-- Change this from Inversion Sentence Challenge -->
             <div id="timer-bar"></div>
@@ -158,6 +212,10 @@ class ReportingVerbGame {
             <button id="downloadReport">Download Report</button>
         </div>
     `;
+        // Attach event listener to the "Got It!" button to close the overlay
+    document.getElementById("close-instructions").addEventListener("click", () => {
+        document.getElementById("instructions-overlay").style.display = "none";
+    });
 
         document.getElementById("start").addEventListener("click", () => this.startGame());
         document.getElementById("restart").addEventListener("click", () => this.restartGame());
